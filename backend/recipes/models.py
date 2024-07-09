@@ -1,4 +1,3 @@
-from colorfield.fields import ColorField
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 
@@ -17,11 +16,6 @@ class Tag(models.Model):
         max_length=32,
         unique=True,
         help_text='Слаг тега, не более 32 символов.',
-    )
-    color = ColorField(
-        'Цвет',
-        default='#FF0000',
-        format='hex',
     )
 
     class Meta:
