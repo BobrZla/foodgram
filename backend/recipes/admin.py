@@ -6,7 +6,7 @@ from .models import (
     RecipeIngredient,
     Tag,
     Favourites,
-    Shopping_cart,
+    ShoppingCart,
 )
 
 
@@ -33,7 +33,7 @@ class RecipeIngredientAdmin(admin.ModelAdmin):
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ('name', 'color', 'slug')
+    list_display = ('name', 'slug')
     list_filter = ('name',)
     search_fields = ('name',)
     empty_value_display = '-пусто-'
@@ -44,6 +44,6 @@ class FavouritesAdmin(admin.ModelAdmin):
     list_display = ('user', 'recipe')
 
 
-@admin.register(Shopping_cart)
+@admin.register(ShoppingCart)
 class Shopping_cartAdmin(admin.ModelAdmin):
     list_display = ('user', 'recipe')

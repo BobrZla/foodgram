@@ -7,6 +7,10 @@ from .validators import validate_username
 class CustomUser(AbstractUser):
     """Своя модель юзера."""
 
+    avatar = models.ImageField(
+        'Аватар',
+        upload_to='avatars',
+    )
     username = models.CharField(
         'username',
         max_length=150,

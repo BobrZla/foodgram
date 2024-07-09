@@ -103,7 +103,7 @@ class Recipe(models.Model):
         return self.name
 
 
-class Shopping_cart(models.Model):
+class ShoppingCart(models.Model):
     """Список покупок."""
 
     user = models.ForeignKey(
