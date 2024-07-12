@@ -1,6 +1,4 @@
-import csv
 from django.http import HttpResponse
-from django.shortcuts import render
 from rest_framework import viewsets, status
 from djoser.views import UserViewSet as DjoserUserViewSet
 from rest_framework.decorators import action
@@ -10,6 +8,8 @@ from rest_framework.permissions import (
 )
 from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
+from foodgram.settings import HOST
+from django.db.models import Sum
 
 from .serializers import (
     CustomUserSerializer,
@@ -20,15 +20,12 @@ from .serializers import (
     RecipeListSerializer,
     RecipeSerializer,
     FavoriteSerializer,
-    ShortRecipeSerializer,
     ShoppingCartSerializer,
 )
 from users.models import CustomUser, Follow
 from .paginations import CustomPagination
 from recipes.models import Recipe, Tag, Ingredient, Favourites, ShoppingCart, RecipeIngredient
 from .filters import IngredientFilter, RecipeFilter
-from foodgram.settings import HOST
-from django.db.models import Sum
 
 
 class UsersViewSet(DjoserUserViewSet):

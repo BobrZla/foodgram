@@ -10,12 +10,22 @@ from .models import (
 )
 
 
+class RecipeIngredientInline(admin.TabularInline):
+    model = RecipeIngredient
+    extra = 1
+
+
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'author', 'cooking_time')
+    list_display = ('name', 'author', 'cooking_time', 'favorite_count')
     list_filter = ('name', 'author', 'tags')
     search_fields = ('name', 'author', 'tags')
+    inlines = (RecipeIngredientInline, )
     empty_value_display = '-пусто-'
+
+    def favorite_count(self, obj):
+        return obj.in_favourites.count()
+    favorite_count.short_description = 'Количество добавлений в избранное'
 
 
 @admin.register(Ingredient)

@@ -4,7 +4,6 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 from rest_framework.exceptions import PermissionDenied
 
-
 from users.models import CustomUser, Follow
 from recipes.models import (
     Recipe,
@@ -40,7 +39,6 @@ class CustomUserCreateSerializer(UserCreateSerializer):
 
 class CustomUserSerializer(UserSerializer):
     is_subscribed = serializers.SerializerMethodField()
-    # avatar = Base64ImageField()
 
     class Meta:
         model = CustomUser
@@ -153,7 +151,6 @@ class RecipeListSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
-    # image = Base64ImageField()
 
     class Meta:
         model = Recipe
@@ -291,15 +288,6 @@ class RecipeSerializer(serializers.ModelSerializer):
             recipe.ingredients.clear()
             self.add_ingredients(ingredients, recipe)
         return recipe
-
-    # def destroy(self, instance):
-    #     print('qweqweqweqweqwe')
-    #     if instance.author != self.context.get('request').user:
-    #         raise PermissionDenied(
-    #             'У вас нет прав на удаление этого рецепта.'
-    #         )
-    #     instance.delete()
-
 
     def to_representation(self, instance):
         return RecipeListSerializer(instance, context=self.context).data
