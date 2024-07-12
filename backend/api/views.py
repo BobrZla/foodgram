@@ -26,7 +26,7 @@ from .serializers import (
 from users.models import CustomUser, Follow
 from .paginations import CustomPagination
 from recipes.models import Recipe, Tag, Ingredient, Favourites, ShoppingCart, RecipeIngredient
-from .filters import IngredientFilter
+from .filters import IngredientFilter, RecipeFilter
 from foodgram.settings import HOST
 from django.db.models import Sum
 
@@ -122,11 +122,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = CustomPagination
+    filterset_class = RecipeFilter
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
             return RecipeListSerializer
         return RecipeSerializer
+    
+    def destroy(self, request, *args, **kwargs):
+        if self.request.user != self.get_object().author:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        return super().destroy(request, *args, **kwargs)
 
     @action(
         methods=['POST', 'DELETE'],
@@ -203,6 +209,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(
         detail=True,
         methods=['GET'],
+        url_path='get-link',
     )
     def get_link(self, request, pk):
         get_object_or_404(Recipe, id=pk)
