@@ -6,4 +6,4 @@ def validate_username(value):
     username_validator = UnicodeUsernameValidator()
     username_validator(value)
     if value.lower() == "me":
-        raise ValidationError('Недопустимое значение для username.')
+        raise ValidationError("Недопустимое значение для username.")
