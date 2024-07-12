@@ -1,3 +1,5 @@
+import csv
+from django.http import HttpResponse
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from djoser.views import UserViewSet as DjoserUserViewSet
@@ -23,8 +25,10 @@ from .serializers import (
 )
 from users.models import CustomUser, Follow
 from .paginations import CustomPagination
-from recipes.models import Recipe, Tag, Ingredient, Favourites, ShoppingCart
+from recipes.models import Recipe, Tag, Ingredient, Favourites, ShoppingCart, RecipeIngredient
 from .filters import IngredientFilter
+from foodgram.settings import HOST
+from django.db.models import Sum
 
 
 class UsersViewSet(DjoserUserViewSet):
@@ -151,17 +155,45 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 return Response(status=status.HTTP_204_NO_CONTENT)
             return Response(data={'errors': 'Этого рецепта нет в списке покупок.'}, status=status.HTTP_400_BAD_REQUEST)
         
-    # @action(
-    #     methods=['GET'],
-    #     detail=False,
-    #     permission_classes=[IsAuthenticated],
-    # )
-    # def download_shopping_cart(self, request):
-    #     user = request.user
-    #     ingredients = IngredientInRecipe.objects.filter(
-    #         recipe__shopping_cart__user=user
-    #     ).values(
-    #         'ingredient__name',
-    #         'ingredient__measurement_unit'
-    #     ).annotate(amount=Sum('amount'))
-    #     return get_shopping_list_csv(ingredients)
+    @action(
+        methods=['GET'],
+        detail=False,
+        permission_classes=[IsAuthenticated],
+    )
+    def download_shopping_cart(self, request):
+        user = request.user
+        if not user.shopping_cart.exists():
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        ingredients = RecipeIngredient.objects.filter(
+            recipe__in_shopping_cart__user=request.user
+        ).values(
+            'ingredient__name',
+            'ingredient__measurement_unit'
+        ).annotate(amount=Sum('amount'))
+        print(ingredients)
+
+        shopping_list = (
+            f'Список покупок для: {user.get_full_name()}\n\n'
+        )
+        shopping_list += '\n'.join([
+            f'- {ingredient["ingredient__name"]} '
+            f'({ingredient["ingredient__measurement_unit"]})'
+            f' - {ingredient["amount"]}'
+            for ingredient in ingredients
+        ])
+
+        filename = f'{user.username}_shopping_list.txt'
+        response = HttpResponse(shopping_list, content_type='text/plain')
+        response['Content-Disposition'] = f'attachment; filename={filename}'
+
+        return response
+
+    @action(
+        detail=True,
+        methods=['GET'],
+    )
+    def get_link(self, request, pk):
+        get_object_or_404(Recipe, id=pk)
+        return Response({"short-link": f"{HOST}/recipes/{pk}"},
+                        status=status.HTTP_200_OK)

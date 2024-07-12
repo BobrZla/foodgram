@@ -134,3 +134,5 @@ REST_FRAMEWORK = {
         'django_filters.rest_framework.DjangoFilterBackend',
     ),
 }
+
+HOST = "http://127.0.0.1:8000"
