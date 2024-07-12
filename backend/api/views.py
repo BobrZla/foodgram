@@ -93,6 +93,17 @@ class UsersViewSet(DjoserUserViewSet):
         )
         return self.get_paginated_response(serializer.data)
 
+    @action(
+        methods=['GET'],
+        permission_classes=[IsAuthenticated],
+        detail=False,
+        url_path='me',
+    )
+    def me(self, request):
+        user = request.user
+        serializer = CustomUserSerializer(user, context={'request': request})
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()

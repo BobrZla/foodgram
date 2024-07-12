@@ -20,6 +20,14 @@ class CustomUserCreateSerializer(UserCreateSerializer):
         )
         extra_kwargs = {'password': {'write_only': True}}
 
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if 'first_name' not in attrs or 'last_name' not in attrs:
+            raise serializers.ValidationError(
+                'У пользователя должны быть указаны имя и фамилия'
+            )
+        return attrs
+
 
 class CustomUserSerializer(UserSerializer):
     is_subscribed = serializers.SerializerMethodField()
@@ -42,6 +50,16 @@ class CustomUserSerializer(UserSerializer):
         if request is None or request.user.is_anonymous:
             return False
         return Follow.objects.filter(user=request.user, author=obj).exists()
+
+    # def to_representation(self, instance):
+    #     if self.context['request'].user.is_authenticated:
+    #         return super().to_representation(instance)
+
+    #     representation = super().to_representation(instance)
+    #     print(representation)
+    #     representation.pop('email', None)
+    #     print(representation)
+    #     return representation
 
 
 class UserAvatarSerializer(serializers.ModelSerializer):
@@ -136,6 +154,7 @@ class RecipeListSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
+    # image = Base64ImageField()
 
     class Meta:
         model = Recipe
@@ -199,14 +218,29 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        if not data.get('ingredients') or len(data.get('ingredients')) == 0:
+        ingredients = data.get('ingredients')
+        tags = data.get('tags')
+        if not ingredients or len(ingredients) == 0:
             raise serializers.ValidationError(
                 'Необходимо добавить хотя бы один ингредиент.'
             )
-        if not data.get('tags') or len(data.get('tags')) == 0:
+        if not tags or len(tags) == 0:
             raise serializers.ValidationError(
                 'Необходимо добавить хотя бы один тег.'
             )
+        if len(tags) != len(set(tags)):
+            raise serializers.ValidationError(
+                'Теги должны быть уникальными.'
+            )
+        for ingredient in ingredients:
+            if ingredient['amount'] <= 0:
+                raise serializers.ValidationError(
+                    'Количество ингредиента должно быть больше нуля.'
+                )
+            if (len(set(val['id'] for val in ingredients)) != len(ingredients)):
+                raise serializers.ValidationError(
+                    'Ингредиенты должны быть уникальными.'
+                )
         return data
 
     def add_ingredients(self, ingredients, recipe):
