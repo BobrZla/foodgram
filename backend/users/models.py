@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 
 from .validators import validate_username
+from .constant import MAX_LEN_USERNAME
 
 
 class CustomUser(AbstractUser):
@@ -10,11 +11,10 @@ class CustomUser(AbstractUser):
     avatar = models.ImageField(
         "Аватар",
         upload_to="avatars",
-        # default='api/avatars/default_avatar.jpg',
     )
     username = models.CharField(
         "username",
-        max_length=150,
+        max_length=MAX_LEN_USERNAME,
         unique=True,
         help_text="Не более 150 символов. Только буквы, цифры и @/./+/-/_.",
         validators=[validate_username],
@@ -54,6 +54,7 @@ class Follow(models.Model):
     class Meta:
         verbose_name = "Подписка"
         verbose_name_plural = "Подписки"
+        ordering = ("-id",)
         constraints = [
             models.UniqueConstraint(
                 fields=("user", "author"),

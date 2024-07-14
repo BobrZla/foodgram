@@ -28,8 +28,6 @@ from recipes.models import (
     Recipe,
     Tag,
     Ingredient,
-    Favourites,
-    ShoppingCart,
     RecipeIngredient,
 )
 from .filters import IngredientFilter, RecipeFilter
@@ -69,9 +67,7 @@ class UsersViewSet(DjoserUserViewSet):
     def subscribe(self, request, id):
         user = request.user
         author = get_object_or_404(CustomUser, id=id)
-        is_subscribed = Follow.objects.filter(
-            user=user, author=author
-        ).exists()
+        is_subscribed = user.follower.filter(author=author).exists()
         if request.method == "POST":
             if author == user or is_subscribed:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -80,7 +76,7 @@ class UsersViewSet(DjoserUserViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if not is_subscribed:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        Follow.objects.filter(user=user, author=author).delete()
+        user.follower.filter(author=author).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
@@ -154,8 +150,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == "DELETE":
-            if Favourites.objects.filter(user=user, recipe=recipe).exists():
-                Favourites.objects.filter(user=user, recipe=recipe).delete()
+            is_favorited = user.favourites.filter(recipe=recipe)
+            if is_favorited.exists():
+                is_favorited.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
             return Response(
                 data={"errors": "Этого рецепта нет в избранном."},
@@ -178,8 +175,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == "DELETE":
-            if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
-                ShoppingCart.objects.filter(user=user, recipe=recipe).delete()
+            is_added_to_cart = user.shopping_cart.filter(recipe=recipe)
+            if is_added_to_cart.exists():
+                is_added_to_cart.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
             return Response(
                 data={"errors": "Этого рецепта нет в списке покупок."},
@@ -203,8 +201,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             .values("ingredient__name", "ingredient__measurement_unit")
             .annotate(amount=Sum("amount"))
         )
-        print(ingredients)
-
         shopping_list = f"Список покупок для: {user.get_full_name()}\n\n"
         shopping_list += "\n".join(
             [
