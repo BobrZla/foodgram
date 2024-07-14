@@ -4,7 +4,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 from rest_framework.exceptions import PermissionDenied
 
-from users.models import CustomUser, Follow
+from users.models import CustomUser
 from recipes.models import (
     Recipe,
     Tag,
@@ -12,6 +12,12 @@ from recipes.models import (
     RecipeIngredient,
     ShoppingCart,
     Favourites,
+)
+from recipes.constant import (
+    MIN_COOKING_TIME,
+    MAX_COOKING_TIME,
+    MIN_AMOUNT,
+    MAX_AMOUNT,
 )
 
 
@@ -56,7 +62,7 @@ class CustomUserSerializer(UserSerializer):
         request = self.context.get("request")
         if request is None or request.user.is_anonymous:
             return False
-        return Follow.objects.filter(user=request.user, author=obj).exists()
+        return request.user.follower.filter(author=obj).exists()
 
 
 class UserAvatarSerializer(serializers.ModelSerializer):
@@ -184,7 +190,9 @@ class RecipeIngredientAddSerializer(serializers.ModelSerializer):
     """Связывает ингредиенты с их количеством."""
 
     id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
-    amount = serializers.IntegerField(min_value=1, max_value=32000)
+    amount = serializers.IntegerField(
+        min_value=MIN_AMOUNT, max_value=MAX_AMOUNT
+    )
 
     class Meta:
         model = RecipeIngredient
@@ -201,8 +209,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         many=True, queryset=Tag.objects.all()
     )
     cooking_time = serializers.IntegerField(
-        min_value=1, max_value=32000
-    )  # может это и не надо тут
+        min_value=MIN_COOKING_TIME, max_value=MAX_COOKING_TIME
+    )
 
     class Meta:
         model = Recipe
@@ -220,25 +228,20 @@ class RecipeSerializer(serializers.ModelSerializer):
     def validate(self, data):
         ingredients = data.get("ingredients")
         tags = data.get("tags")
-        if not ingredients or len(ingredients) == 0:
+        if not ingredients:
             raise serializers.ValidationError(
                 "Необходимо добавить хотя бы один ингредиент."
             )
-        if not tags or len(tags) == 0:
+        if not tags:
             raise serializers.ValidationError(
                 "Необходимо добавить хотя бы один тег."
             )
         if len(tags) != len(set(tags)):
             raise serializers.ValidationError("Теги должны быть уникальными.")
-        for ingredient in ingredients:
-            if ingredient["amount"] <= 0:
-                raise serializers.ValidationError(
-                    "Количество ингредиента должно быть больше нуля."
-                )
-            if len(set(val["id"] for val in ingredients)) != len(ingredients):
-                raise serializers.ValidationError(
-                    "Ингредиенты должны быть уникальными."
-                )
+        if len(set(val["id"] for val in ingredients)) != len(ingredients):
+            raise serializers.ValidationError(
+                "Ингредиенты должны быть уникальными."
+            )
         return data
 
     def add_ingredients(self, ingredients, recipe):
@@ -269,7 +272,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
-        if instance.author != self.context.get("request").user:
+        if instance.author != self.context["request"].user:
             raise PermissionDenied(
                 "У вас нет прав на редактирование этого рецепта."
             )
