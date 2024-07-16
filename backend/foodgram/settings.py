@@ -78,7 +78,7 @@ DATABASES = {
         'NAME': os.getenv('POSTGRES_DB', 'django'),
         'USER': os.getenv('POSTGRES_USER', 'django'),
         'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', ''),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
         'PORT': os.getenv('DB_PORT', 5432),
     }
 }
@@ -156,4 +156,4 @@ REST_FRAMEWORK = {
     ),
 }
 
-HOST = "http://127.0.0.1:8000"
+HOST = "https://foodgram80.zapto.org/"
