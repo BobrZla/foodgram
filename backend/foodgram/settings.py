@@ -156,4 +156,4 @@ REST_FRAMEWORK = {
     ),
 }
 
-HOST = "https://foodgram80.zapto.org/"
+HOST = "https://foodgram80.zapto.org"
