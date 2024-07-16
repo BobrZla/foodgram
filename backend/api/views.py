@@ -8,7 +8,8 @@ from rest_framework.permissions import (
 )
 from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
-from foodgram.settings import HOST
+# from foodgram.settings import HOST
+from django.conf import settings
 from django.db.models import Sum
 
 from .serializers import (
@@ -225,5 +226,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_link(self, request, pk):
         get_object_or_404(Recipe, id=pk)
         return Response(
-            {"short-link": f"{HOST}/recipes/{pk}"}, status=status.HTTP_200_OK
+            {"short-link": f"{settings.HOST}/recipes/{pk}"},
+            status=status.HTTP_200_OK
         )
